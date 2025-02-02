@@ -80,28 +80,40 @@
             renderUpcomingAppointments();
         }
 
+        function isPastAppointment(appt) {
+            const now = new Date();
+            const apptDateTime = new Date(`${appt.date}T${appt.endTime}`);
+            return apptDateTime < now;
+        }
+
         function getUpcomingAppointments() {
             const today = new Date();
             today.setDate(today.getDate() + 1);
             const tomorrow = today.toISOString().split("T")[0];
 
-            return getAppointments().filter(appt => appt.date === tomorrow && appt.status === "confirmed");
+            return getAppointments().filter(appt => 
+                appt.date === tomorrow && 
+                appt.status === "confirmed" && 
+                !isPastAppointment(appt)
+            );
         }
 
         function renderAppointments() {
             const list = document.getElementById("appointmentsList");
             list.innerHTML = "";
-            getAppointments().forEach(appt => {
-                const li = document.createElement("li");
-                li.className = `p-2 border-b flex justify-between ${appt.status === "cancelled" ? "line-through text-gray-400" : ""}`;
-                li.innerHTML = `
-                    <span class="${appt.conflict ? 'text-red-500 font-bold' : ''}">
-                        ${appt.conflict ? '⚠️ ' : ''}${appt.title} (${appt.date} ${appt.startTime} - ${appt.endTime})
-                    </span>
-                    <button onclick="cancelAppointment('${appt.id}')" class="text-red-500 ml-2">ยกเลิก</button>
-                `;
-                list.appendChild(li);
-            });
+            getAppointments()
+                .filter(appt => !isPastAppointment(appt))  // **แสดงเฉพาะนัดหมายที่ยังไม่หมดเวลา**
+                .forEach(appt => {
+                    const li = document.createElement("li");
+                    li.className = `p-2 border-b flex justify-between ${appt.status === "cancelled" ? "line-through text-gray-400" : ""}`;
+                    li.innerHTML = `
+                        <span class="${appt.conflict ? 'text-red-500 font-bold' : ''}">
+                            ${appt.conflict ? '⚠️ ' : ''}${appt.title} (${appt.date} ${appt.startTime} - ${appt.endTime})
+                        </span>
+                        <button onclick="cancelAppointment('${appt.id}')" class="text-red-500 ml-2">ยกเลิก</button>
+                    `;
+                    list.appendChild(li);
+                });
         }
 
         function renderUpcomingAppointments() {
